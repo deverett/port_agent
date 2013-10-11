@@ -50,6 +50,7 @@ namespace packet {
     enum PacketType {
         UNKNOWN,  
         DATA_FROM_INSTRUMENT,
+        DATA_FROM_RSN,
         DATA_FROM_DRIVER,
         PORT_AGENT_COMMAND,
         PORT_AGENT_STATUS,

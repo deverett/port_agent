@@ -93,7 +93,7 @@ namespace network {
 	        bool disconnectClient(bool server_shutdown = false);
 	        bool disconnectServer();
     	    
-	        bool acceptClient();
+	        bool acceptClient(bool persistent = false);
 			
 	        // Connect to the network host
             bool initialize();

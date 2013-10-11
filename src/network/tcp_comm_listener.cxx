@@ -180,8 +180,8 @@ bool TCPCommListener::disconnectClient(bool server_shutdown) {
  * Description: Disconnect a server
  ******************************************************************************/
 bool TCPCommListener::disconnectServer() {
-    if(listening()) {
-        LOG(DEBUG2) << "Closing server connection";
+    if (listening()) {
+        LOG(DEBUG) << "Closing server connection FD: " << m_pServerFD;
 	    //shutdown(m_pServerFD,2);
 	    close(m_pServerFD);
 	    m_pServerFD = 0;
@@ -197,25 +197,30 @@ bool TCPCommListener::disconnectServer() {
  *   SocketNotInitialized
  *   SocketAlreadyConnected
  ******************************************************************************/
-bool TCPCommListener::acceptClient() {
+bool TCPCommListener::acceptClient(bool persistent) {
     socklen_t clilen;
     struct sockaddr_in cli_addr;
-    
     int newsockfd;
-    
-    if(!listening())
+
+    LOG(DEBUG) << "persistent: " << persistent;
+
+    if (!listening())
         throw SocketNotInitialized();
 
-    if(connected()) {
+    if (connected()) {
+        LOG(ERROR) << "Already connected!.";
+
         clilen = sizeof(cli_addr);
         newsockfd = accept(m_pServerFD, 
                     (struct sockaddr *) &cli_addr, 
                     &clilen);
-		if(newsockfd) close(newsockfd);
+		if (newsockfd) {
+		    close(newsockfd);
+		}
         throw SocketAlreadyConnected();
 	}
 
-    LOG(DEBUG) << "accepting client connection.";
+    LOG(DEBUG) << "accepting client connection from FD: " << m_pServerFD;
      
     clilen = sizeof(cli_addr);
     newsockfd = accept(m_pServerFD, 
@@ -244,8 +249,10 @@ bool TCPCommListener::acceptClient() {
     LOG(DEBUG) << "Storing new FD: " << newsockfd;
 	m_pClientFD = newsockfd;
 	
-    LOG(DEBUG) << "Disconnect server";
-	disconnectServer();
+	if (!persistent) {
+	    LOG(DEBUG) << "Disconnect server";
+	    disconnectServer();
+	}
 	
     return true;
 }
@@ -259,18 +266,22 @@ bool TCPCommListener::acceptClient() {
 uint16_t TCPCommListener::getListenPort() {
     struct sockaddr_in sin;
     socklen_t len = sizeof(sin);
+    uint16_t iPort;
     
     LOG(DEBUG) << "Fetch listen port";
     
-    if(!listening())
+    if (!listening()) {
+        LOG(DEBUG) << "Listener not currently listening";
 	    return 0;
-
-    LOG(DEBUG2) << "get port from FD " << m_pServerFD;
+    }
 
     if (getsockname(m_pServerFD, (struct sockaddr *)&sin, &len) == -1)
         throw SocketConnectFailure(strerror(errno));
+
+    iPort = ntohs(sin.sin_port);
+    LOG(DEBUG) << "Port from FD: " << m_pServerFD << " is: " << iPort;
         
-    return ntohs(sin.sin_port);
+    return iPort;
 }
 
 /******************************************************************************

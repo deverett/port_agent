@@ -89,6 +89,7 @@ namespace port_agent {
             void initializeObservatoryCommandConnection();
             void initializeInstrumentConnection();
             void initializeTCPInstrumentConnection();
+            void initializeRSNInstrumentConnection();
             void initialize_BOTPT_InstrumentConnection();
             void initializeSerialInstrumentConnection();
             bool initializeSerialSettings();
@@ -117,7 +118,7 @@ namespace port_agent {
             
             // Other handlers
             void handlePortAgentCommand(const char *commands);
-            void handleTCPConnect(TCPCommListener &listener);
+            void handleTCPConnect(TCPCommListener &listener, bool persistent = false);
             
             void handleTelnetSnifferAccept(const fd_set &readFDs);
             void handleTelnetSnifferRead(const fd_set &readFDs);

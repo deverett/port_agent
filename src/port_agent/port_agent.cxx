@@ -12,6 +12,7 @@
 #include "connection/observatory_connection.h"
 #include "connection/observatory_multi_connection.h"
 #include "connection/instrument_tcp_connection.h"
+#include "connection/instrument_rsn_connection.h"
 #include "connection/instrument_botpt_connection.h"
 #include "connection/instrument_serial_connection.h"
 #include "packet/packet.h"
@@ -258,16 +259,24 @@ void PortAgent::initializeObservatoryCommandConnection() {
     //ObservatoryConnection* pConnection = (ObservatoryConnection*) m_pObservatoryConnection;
     TCPCommListener *listener = NULL;
 
-    
+    LOG(INFO) << "Initialize observatory command connection";
+
     //if (pConnection) {
     if (m_pObservatoryConnection) {
-        //listener = (TCPCommListener *)(pConnection->commandConnectionObject());
+        LOG(DEBUG2) << "Observatory connection already exists";
         listener = (TCPCommListener *)(m_pObservatoryConnection->commandConnectionObject());
     
         // If we are initialized already ensure the ports match.  If not, reinit
-        if(listener) {
-            if( listener->getListenPort() != m_pConfig->observatoryCommandPort()) 
+        if (listener) {
+            if (listener->getListenPort() != m_pConfig->observatoryCommandPort()) {
+                LOG(INFO) << "Existing observatory command port doesn't match config: disconnecting.";
+                LOG(DEBUG) << "Existing command port: " <<  listener->getListenPort() <<
+                        "; config port: " << m_pConfig->observatoryCommandPort();
                 listener->disconnect();
+            }
+        }
+        else {
+            LOG(DEBUG2) << "Command listener does not exist";
         }
 
         // If the configured connection type is not the same as the existing, delete
@@ -285,8 +294,10 @@ void PortAgent::initializeObservatoryCommandConnection() {
 
     // Create the connection object
     if (!m_pObservatoryConnection) {
+        LOG(DEBUG2) << "Observatory connection does not exist";
         if (m_pConfig->observatoryConnectionType() == OBS_TYPE_STANDARD) {
-            LOG(DEBUG2) << "creating new observatory standard connection object";
+            LOG(DEBUG) << "creating new observatory standard connection object with port: " <<
+                    m_pConfig->observatoryCommandPort();
             m_pObservatoryConnection = new ObservatoryConnection();
             ObservatoryConnection* pConnection = (ObservatoryConnection*) m_pObservatoryConnection;
             pConnection->setCommandPort(m_pConfig->observatoryCommandPort());
@@ -295,7 +306,8 @@ void PortAgent::initializeObservatoryCommandConnection() {
                 m_pObservatoryConnection->initializeCommandSocket();
         }
         else if (m_pConfig->observatoryConnectionType() == OBS_TYPE_MULTI) {
-            LOG(DEBUG2) << "creating new observatory multi connection object";
+            LOG(DEBUG) << "creating new observatory standard connection object with port: " <<
+                    m_pConfig->observatoryCommandPort();
             m_pObservatoryConnection = new ObservatoryMultiConnection();
             ObservatoryMultiConnection* pConnection = (ObservatoryMultiConnection*) m_pObservatoryConnection;
             pConnection->setCommandPort(m_pConfig->observatoryCommandPort());
@@ -324,10 +336,13 @@ void PortAgent::initializeInstrumentConnection() {
     if (m_pConfig->instrumentConnectionType() == TYPE_TCP) {
         initializeTCPInstrumentConnection();
     }
-    if (m_pConfig->instrumentConnectionType() == TYPE_BOTPT) {
+    else if (m_pConfig->instrumentConnectionType() == TYPE_RSN) {
+        initializeRSNInstrumentConnection();
+    }
+    else if (m_pConfig->instrumentConnectionType() == TYPE_BOTPT) {
         initialize_BOTPT_InstrumentConnection();
     }
-    if (m_pConfig->instrumentConnectionType() == TYPE_SERIAL) {
+    else if (m_pConfig->instrumentConnectionType() == TYPE_SERIAL) {
         initializeSerialInstrumentConnection();
     }
     else {
@@ -373,6 +388,73 @@ void PortAgent::initializeTCPInstrumentConnection() {
     if (!connection->connected()) {
         LOG(DEBUG) << "Instrument not connected, attempting to reconnect";
         LOG(DEBUG2) << "host: " << connection->dataHost() << " port: " << connection->dataPort();
+
+        setState(STATE_DISCONNECTED);
+
+        try {
+            connection->initialize();
+        }
+        catch(SocketConnectFailure &e) {
+            connection->disconnect();
+            string msg = e.what();
+            LOG(ERROR) << msg;
+        };
+
+        // Let everything connect
+        sleep(SELECT_SLEEP_TIME);
+    }
+
+
+    if(connection->connected())
+        setState(STATE_CONNECTED);
+}
+
+/******************************************************************************
+ * Method: initializeRSNInstrumentConnection
+ * Description: Connect to an RSN type instrument.
+ *
+ * State Transitions:
+ *  Connected - if we can connect to an instrument
+ *  Disconnected - if we fail to connect to an instrument
+ ******************************************************************************/
+void PortAgent::initializeRSNInstrumentConnection() {
+    InstrumentRSNConnection *connection = (InstrumentRSNConnection *)m_pInstrumentConnection;
+
+    // Clear if we have already initialized the wrong type
+    if(connection && connection->connectionType() != PACONN_INSTRUMENT_RSN) {
+        LOG(INFO) << "Detected connection type change.  rebuilding connection.";
+        delete connection;
+        connection = NULL;
+    }
+
+    // Create the connection object
+    if (!connection) {
+        LOG(INFO) << "Initializing new InstrumentRSNConnection.";
+        m_pInstrumentConnection = connection = new InstrumentRSNConnection();
+    }
+
+    // If we have changed out configuration the set the new values and try to connect
+    if (connection->dataHost() != m_pConfig->instrumentAddr() ||
+       connection->dataPort() != m_pConfig->instrumentDataPort() ||
+       connection->commandPort() != m_pConfig->instrumentCommandPort()) {
+        LOG(INFO) << "Detected connection configuration change.  reconfiguring.";
+        LOG(INFO) << "dataHost: " << connection->dataHost() <<
+                "; dataPort: " << connection->dataPort() <<
+                "; commandPort: " << connection->commandPort();
+
+        connection->disconnect();
+
+        connection->setDataHost(m_pConfig->instrumentAddr());
+        connection->setDataPort(m_pConfig->instrumentDataPort());
+        connection->setCommandHost(m_pConfig->instrumentAddr());
+        connection->setCommandPort(m_pConfig->instrumentCommandPort());
+    }
+
+    if (!connection->connected()) {
+        LOG(DEBUG) << "Instrument not connected, attempting to reconnect";
+        LOG(DEBUG) << "host: " << connection->dataHost() <<
+                " data port: " << connection->dataPort() <<
+                " command port: " << connection->commandPort();
 
         setState(STATE_DISCONNECTED);
 
@@ -883,8 +965,10 @@ void PortAgent::processPortAgentCommands() {
  * Parameter:
  *   listener - TCP listener object for managing the tcp connection.
  ******************************************************************************/
-void PortAgent::handleTCPConnect(TCPCommListener &listener) {
-    listener.acceptClient();
+void PortAgent::handleTCPConnect(TCPCommListener &listener, bool persistent) {
+
+    LOG(DEBUG) << "persistent: " << persistent;
+    listener.acceptClient(persistent);
     LOG(DEBUG) << "new client FD: " << listener.clientFD();
     
     if(! listener.connected()) {
@@ -1568,8 +1652,14 @@ void PortAgent::publishPacket(Packet *packet) {
  ******************************************************************************/
 void PortAgent::publishPacket(char *payload, uint16_t size, PacketType type) {
     Timestamp ts;
-    Packet packet(type, ts, payload, size);
-    publishPacket(&packet); 
+
+    if (DATA_FROM_INSTRUMENT == type) {
+        Packet packet(type, ts, payload, size);
+        publishPacket(&packet);
+    }
+    else {
+        publishPacket((Packet *) payload);
+    }
 }
 
 /******************************************************************************
@@ -1632,7 +1722,10 @@ void PortAgent::handleObservatoryCommandAccept(const fd_set &readFDs) {
     // Accept a new observatory command client
     if(serverFD && FD_ISSET(serverFD, &readFDs)) {
         LOG(DEBUG) << "Observatory command listener has data";
-        handleTCPConnect(*((TCPCommListener*)pConnection));
+        // pass the connection type here, because the
+        // handleTCPConnect will call acceptClient(), which has been modified
+        // to disconnect after the client is successfully accepted.
+        handleTCPConnect(*((TCPCommListener*)pConnection), true);
     }
 }
 
@@ -1649,12 +1742,12 @@ void PortAgent::handleObservatoryCommandRead(const fd_set &readFDs) {
     LOG(DEBUG) << "handleObservatoryCommandRead - do we need to read from the observatory command";
     LOG(DEBUG) << "Observatory Command Client FD: " << clientFD;
         
-    if(clientFD && FD_ISSET(clientFD, &readFDs)) {
+    if (clientFD && FD_ISSET(clientFD, &readFDs)) {
         LOG(DEBUG) << "Read data from Observatory Command Client FD: " << clientFD;
         bytesRead = ((TCPCommListener*)pConnection)->readData(buffer, 1023);
         buffer[bytesRead] = '\0';
         
-        if(bytesRead) {
+        if (bytesRead) {
             LOG(DEBUG2) << "Bytes read: " << bytesRead;
             handlePortAgentCommand(buffer);
             publishPacket(buffer, bytesRead, PORT_AGENT_COMMAND);
@@ -1831,9 +1924,15 @@ void PortAgent::handleInstrumentDataRead(const fd_set &readFDs) {
         bytesRead = pConnection->readData(buffer, 1023);
         
         if(bytesRead) {
-            LOG(DEBUG2) << "Bytes read: " << bytesRead;
-            publishPacket(buffer, bytesRead, DATA_FROM_INSTRUMENT);
-            //buffer[bytesRead] = '\0';
+            if (m_pInstrumentConnection->connectionType() == PACONN_INSTRUMENT_RSN) {
+                LOG(DEBUG) << "Bytes read from RSN DIGI: " << bytesRead;
+                publishPacket(buffer, bytesRead, DATA_FROM_RSN);
+            }
+            else {
+                LOG(DEBUG2) << "Bytes read: " << bytesRead;
+                publishPacket(buffer, bytesRead, DATA_FROM_INSTRUMENT);
+                //buffer[bytesRead] = '\0';
+            }
         }
     }
 }

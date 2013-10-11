@@ -114,7 +114,7 @@ bool TCPCommSocket::initialize() {
 		 server->h_length);
 	serv_addr.sin_port = htons(m_iPort);
 
-	LOG(DEBUG2) << "Connecting to server";
+	LOG(INFO) << "Connecting to server: " << m_sHostname << ", port: "<< m_iPort;
 	int retval = connect(m_pSocketFD,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
 	if (retval < 0)
 	    if(errno != EINPROGRESS ) // ignore EINPROGRESS error because we are NON-Blocking
