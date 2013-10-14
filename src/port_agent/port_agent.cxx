@@ -943,7 +943,12 @@ void PortAgent::processPortAgentCommands() {
                 break;
             case CMD_BREAK:
                 LOG(DEBUG) << "break command";
-                m_pInstrumentConnection->sendBreak(m_pConfig->breakDuration());
+                if (m_pInstrumentConnection) {
+                    m_pInstrumentConnection->sendBreak(m_pConfig->breakDuration());
+                }
+                else {
+                    LOG(ERROR) << "break command failed: no instrument connection.";
+                }
                 break;
             case CMD_ROTATION_INTERVAL:
                 LOG(DEBUG) << "set rotation interval";
