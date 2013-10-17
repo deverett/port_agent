@@ -37,7 +37,7 @@
  *    
  ******************************************************************************/
 #include <string>
-
+#include <string.h>
 #include "instrument_rsn_connection.h"
 #include "common/util.h"
 #include "common/logger.h"
@@ -264,10 +264,22 @@ void InstrumentRSNConnection::initializeDataSocket() {
 
 /******************************************************************************
  * Method: initializeCommandSocket
- * Description: NOOP
+ * Description: Initialize the command socket to the DIGI.  The DIGI sends an
+ * initial banner & prompt that we need to read (mainly to clear the buffer so
+ * that we can successfully send and other commands and read their responses.
  ******************************************************************************/
 void InstrumentRSNConnection::initializeCommandSocket() {
     m_oCommandSocket.initialize();
+
+    // The DIGI sends an initial banner & prompt; make sure we get that
+    string sResponse = "OOI - Digi Command Interface\r\ntype help for command information\r\n";
+    if ((readCommandResponse(sResponse) == false) ||
+        (setTimestampBinaryOn() == false)) {
+        m_oCommandSocket.disconnect();
+    }
+    else {
+        LOG(INFO) << "Command socket FD: " << m_oCommandSocket.getSocketFD() << " initialized.";
+    }
 }
 
 /******************************************************************************
@@ -299,71 +311,148 @@ void InstrumentRSNConnection::initialize() {
 }
 
 /******************************************************************************
+ * Method: toString
+ * Description: Send a break condition for the given duration.
+ ******************************************************************************/
+template <class T>
+inline std::string toString (const T& t) {
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
+}
+
+/******************************************************************************
  * Method: sendBreak
  * Description: Send a break condition for the given duration.
+ *
+ * Return boolean: true if successful (including reading command ack).
+ *                 false if failure.
  ******************************************************************************/
 bool InstrumentRSNConnection::sendBreak(const uint32_t iDuration) {
     bool bReturnCode = true;
-
+    string sDuration = toString(iDuration);
+    string sResponse = "Sending Serial Break " + sDuration + "(ms)\r\n\r\n";
 
     // build the break command.
-
     std::ostringstream ssCommand;
-    ssCommand << "break " << iDuration;
+    ssCommand << "break " << iDuration << "\r\n";
 
-
-    if (!sendCommand(ssCommand)) {
-        LOG(ERROR) << "Failed to send break.";
-        bReturnCode = false;
+    bReturnCode = sendCommand(ssCommand);
+    if (true == bReturnCode) {
+        bReturnCode = readCommandResponse(sResponse);
+        if (false == bReturnCode) {
+            LOG(ERROR) << "break command not acknowledged!";
+        }
+    }
+    else {
+        LOG(ERROR) << "sendCommand returned false.";
     }
 
     return bReturnCode;
 }
 
 /******************************************************************************
- * Method: sendBreak
- * Description: Send a break condition for the given duration.
+ * Method: setTimestampBinaryOn
+ * Description: Send the timestamping command, set to binary.
+ *
+ * Return boolean: true if successful (including reading command ack).
+ *                 false if failure.
  ******************************************************************************/
 bool InstrumentRSNConnection::setTimestampBinaryOn(void) {
     bool bReturnCode = true;
+    string sResponse = "Set Timestamping:On(binary)\r\n\r\n";
 
+    // build the setTimestamp command: alwasy set to binary (2).
+    std::ostringstream ssCommand;
+    ssCommand << "timestamping 2\r\n";
 
-    // build the break command.
-
-    std::ostringstream sCommand;
-    sCommand << "timestamping 2";
-
-    if (!sendCommand(sCommand)) {
-        LOG(ERROR) << "Failed to send break.";
-        bReturnCode = false;
+    bReturnCode = sendCommand(ssCommand);
+    if (true == bReturnCode) {
+        bReturnCode = readCommandResponse(sResponse);
+        if (false == bReturnCode) {
+            LOG(ERROR) << "setTimestamp command not acknowledged!";
+        }
     }
-
+    else {
+        LOG(ERROR) << "sendCommand returned false.";
+    }
     return bReturnCode;
 }
 
 /******************************************************************************
- * Method: sendBreak
- * Description: Send a break condition for the given duration.
+ * Method: sendCommand
+ * Description: Send the given command to the DIGI, and read the echoed
+ * response.
+ *
+ * Return boolean: true if successful (including reading command echo).
+ *                 false if failure.
  ******************************************************************************/
-//bool InstrumentRSNConnection::sendCommand(const char* buffer) {
 bool InstrumentRSNConnection::sendCommand(std::ostringstream &ssCommand) {
     bool bReturnCode = true;
 
     // convert the command to a char array
     int iSize = ssCommand.tellp();
     string sCommand = ssCommand.str();
-    //char* pCommand = sCommand.c_str();
 
     LOG(INFO) << "Sending command: " << sCommand << "; length: " << sCommand.length();
 
-    //if (!m_oCommandSocket.writeData(pCommand, iSize)) {
     if (!m_oCommandSocket.writeData(sCommand.c_str(), sCommand.length())) {
         LOG(ERROR) << "Failed to send command: " << sCommand;
         bReturnCode = false;
     }
-
-    // question: how do i look at the returned data?
+    else {
+        bReturnCode = readCommandResponse(sCommand);
+        if (false == bReturnCode) {
+            LOG(ERROR) << "Command not echoed!";
+        }
+    }
 
     return bReturnCode;
 }
 
+/******************************************************************************
+ * Method: sendBreak
+ * Description: Read the given response from the DIGI.
+ *
+ * Return boolean: true if response is found.
+ *                 false if timeout or response didn't match.
+ ******************************************************************************/
+bool InstrumentRSNConnection::readCommandResponse(const string &sResponse) {
+    bool bResponseReceived = false;
+    char* pBuffer = new char[1000];
+    struct timespec sTimeDelay;
+
+    LOG(DEBUG2) << "readCommandResponse looking for :" << sResponse;
+
+    if (sResponse.length() > 0) {
+        uint32_t bytes_read = 0;
+        uint32_t total_bytes_read = 0;
+        uint32_t iTimeout = 20; // 2 seconds
+        while (bytes_read < sResponse.length() && iTimeout) {
+            bytes_read = m_oCommandSocket.readData(&(pBuffer[total_bytes_read]), sResponse.length());
+            total_bytes_read += bytes_read;
+            LOG(DEBUG2) << "Received " << total_bytes_read << " bytes from command socket: " << pBuffer;
+
+            sTimeDelay.tv_sec = 0; /* Number of seconds */
+            sTimeDelay.tv_nsec = 100 * 1000000;   /*Number of nanoseconds */
+
+            nanosleep(&sTimeDelay, NULL);
+            iTimeout--;
+        }
+
+        if (0 >= iTimeout) {
+            LOG(ERROR)  << "Timeout waiting for response: <" << sResponse << "> from DIGI";
+        }
+        else {
+            // Get the see if the response matches
+            if (!strncmp(sResponse.c_str(), pBuffer, sResponse.length())) {
+                bResponseReceived = true;
+            }
+            else {
+                LOG(ERROR) << "Received response: " << pBuffer << " did not match: " << sResponse;
+            }
+        }
+    }
+
+    return bResponseReceived;
+}

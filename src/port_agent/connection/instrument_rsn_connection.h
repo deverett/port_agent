@@ -112,8 +112,10 @@ namespace port_agent {
             bool setTimestampBinaryOn(void);
 
             // Generic method for sending commands to the command port
-            //bool sendCommand(const char *buffer);
-            bool sendCommand(ostringstream &command);
+            bool sendCommand(ostringstream &ssCommand);
+
+            // Method for reading command responses from the command port
+            bool readCommandResponse(const string &sResponse = "");
 
         protected:
 
