@@ -42,19 +42,26 @@ TEST_F(InstrumentRSNConnectionTest, NormalConnection) {
         EXPECT_FALSE(connection.dataConfigured());
         connection.setDataHost(TEST_DATA_HOST);
         EXPECT_TRUE(connection.dataConfigured());
-    
+        EXPECT_FALSE(connection.commandConfigured());
+        connection.setCommandPort(atoi(TEST_COMMAND_PORT));
+        EXPECT_TRUE(connection.dataConfigured());
+        EXPECT_FALSE(connection.commandConfigured());
+        connection.setCommandHost(TEST_DATA_HOST);
+        EXPECT_TRUE(connection.dataConfigured());
+        EXPECT_TRUE(connection.commandConfigured());
+
         EXPECT_EQ(pConnection->connectionType(), PACONN_INSTRUMENT_RSN);
     
         connection.initialize();
     
         EXPECT_TRUE(connection.dataInitialized());
-        EXPECT_FALSE(connection.commandInitialized());
+        EXPECT_TRUE(connection.commandInitialized());
     
         EXPECT_FALSE(connection.dataConnected());
         EXPECT_FALSE(connection.commandConnected());
     
         ASSERT_TRUE(connection.dataConnectionObject());
-        ASSERT_FALSE(connection.commandConnectionObject());
+        ASSERT_TRUE(connection.commandConnectionObject());
     }
     catch(OOIException &e) {
 		string err = e.what();

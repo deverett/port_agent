@@ -53,7 +53,7 @@ TEST_F(PortAgentPacketTest, CTOR) {
     EXPECT_EQ(byteToUnsignedInt(packetBuffer[2]), 0x7A);
 
     // Check the message type
-    EXPECT_EQ(byteToUnsignedInt(packetBuffer[3]), 0x02);
+    EXPECT_EQ(byteToUnsignedInt(packetBuffer[3]), DATA_FROM_DRIVER);
 
     // Check the packetBuffer size
     EXPECT_EQ(byteToUnsignedInt(packetBuffer[4]), 0x00);
@@ -61,7 +61,7 @@ TEST_F(PortAgentPacketTest, CTOR) {
 
     // Check the checksum
     EXPECT_EQ(byteToUnsignedInt(packetBuffer[6]), 0x00);
-    EXPECT_EQ(byteToUnsignedInt(packetBuffer[7]), 0xd0);
+    EXPECT_EQ(byteToUnsignedInt(packetBuffer[7]), 0xd1);
 
     // Check the timestamp
     EXPECT_EQ(byteToUnsignedInt(packetBuffer[8]),  0x00);
