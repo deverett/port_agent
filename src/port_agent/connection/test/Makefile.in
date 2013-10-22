@@ -47,6 +47,7 @@ am_observatory_connection_test_OBJECTS =  \
 	observatory_connection_test.$(OBJEXT) \
 	observatory_multi_connection_test.$(OBJEXT) \
 	instrument_tcp_connection_test.$(OBJEXT) \
+	instrument_rsn_connection_test.$(OBJEXT) \
 	instrument_botpt_connection_test.$(OBJEXT)
 observatory_connection_test_OBJECTS =  \
 	$(am_observatory_connection_test_OBJECTS)
@@ -186,6 +187,7 @@ DEPLIBS = $(top_builddir)/src/port_agent/connection/libport_agent_connection.a \
 observatory_connection_test_SOURCES = observatory_connection_test.cxx \
                                       observatory_multi_connection_test.cxx \
                                       instrument_tcp_connection_test.cxx \
+                                      instrument_rsn_connection_test.cxx \
                                       instrument_botpt_connection_test.cxx 
 
 observatory_connection_test_LDADD = $(DEPLIBS) -lgtest
@@ -238,6 +240,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instrument_botpt_connection_test.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instrument_rsn_connection_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/instrument_tcp_connection_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/observatory_connection_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/observatory_multi_connection_test.Po@am__quote@
