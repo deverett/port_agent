@@ -58,6 +58,7 @@ using namespace port_agent;
  *              define it explicitly.
  ******************************************************************************/
 InstrumentRSNConnection::InstrumentRSNConnection() : Connection() {
+    m_bTimestampBinaryOn = false;
 }
 
 /******************************************************************************
@@ -68,6 +69,7 @@ InstrumentRSNConnection::InstrumentRSNConnection() : Connection() {
  *   copy - rhs object to copy
  ******************************************************************************/
 InstrumentRSNConnection::InstrumentRSNConnection(const InstrumentRSNConnection& rhs) {
+    m_bTimestampBinaryOn = false;
     copy(rhs);
 }
 
@@ -102,6 +104,7 @@ InstrumentRSNConnection & InstrumentRSNConnection::operator=(const InstrumentRSN
 void InstrumentRSNConnection::copy(const InstrumentRSNConnection &copy) {
     m_oDataSocket = copy.m_oDataSocket;
     m_oCommandSocket = copy.m_oCommandSocket;
+    m_bTimestampBinaryOn = copy.m_bTimestampBinaryOn;
 }
 
 /******************************************************************************
@@ -165,10 +168,11 @@ void InstrumentRSNConnection::setCommandHost(const string & host) {
  * Description: Are we connected to both ports on the RSN DIGI?
  *
  * Return:
- *   True if we have both the data and command connections
+ *   True if we are connected to the data RSN DIGI data port.
+ *   False if not connected to the RSN DIGI data port.
  ******************************************************************************/
 bool InstrumentRSNConnection::connected() {
-    return m_oDataSocket.connected() && m_oCommandSocket.connected();
+    return m_oDataSocket.connected();
 }
 
 /******************************************************************************
@@ -177,10 +181,11 @@ bool InstrumentRSNConnection::connected() {
  * DIGI
  *
  * Return:
- *   True if we have disconnected from both the data and command connections
+ *   True if we have disconnected from the data port.
+ *   False otherwise (don't think that ever happens).
  ******************************************************************************/
 bool InstrumentRSNConnection::disconnect() {
-    return m_oDataSocket.disconnect() && m_oCommandSocket.disconnect();
+    return m_oDataSocket.disconnect();
 }
 
 /******************************************************************************
@@ -269,17 +274,36 @@ void InstrumentRSNConnection::initializeDataSocket() {
  * that we can successfully send and other commands and read their responses.
  ******************************************************************************/
 void InstrumentRSNConnection::initializeCommandSocket() {
+
+    /*
+     * Initialize the command socket. Every time we do, we will get the banner,
+     * so we need to make sure we read that out of the socket.  Then we need to
+     * turn binary timestamping on.  We shouldn't move to connected state if
+     * timestamping isn't on.
+     *
+     * Also, we need to initialize the socket here, because every command
+     * operation calls this method.  But we can't close the socket here,
+     * because we'll close it right out from under the method that is issueing
+     * the command.  So we close the connection in the command methods.
+     */
+
     m_oCommandSocket.initialize();
 
-    // The DIGI sends an initial banner & prompt; make sure we get that
+    /*
+     * The DIGI sends an initial banner & prompt; make sure we get that.  Also
+     * turn binary timestamping on.
+     */
+
     string sResponse = "OOI - Digi Command Interface\r\ntype help for command information\r\n";
     if ((readCommandResponse(sResponse) == false) ||
         (setTimestampBinaryOn() == false)) {
-        m_oCommandSocket.disconnect();
+        m_bTimestampBinaryOn = false;
     }
     else {
+        m_bTimestampBinaryOn = true;
         LOG(INFO) << "Command socket FD: " << m_oCommandSocket.getSocketFD() << " initialized.";
     }
+
 }
 
 /******************************************************************************
@@ -304,9 +328,23 @@ void InstrumentRSNConnection::initialize() {
         initializeDataSocket();
     } 
 
+    /*
+     * If all is still good, initialize the command connection only to
+     * assert that we can initialize it (i.e., configured correctly)
+     * and that we can turn binary timestamping on.
+     */
     if (commandConfigured() && bAllGood && !commandConnected()) {
         LOG(DEBUG) << "initialize command socket";
         initializeCommandSocket();
+
+        /*
+         * Disconnect because we don't want to keep the command port open.
+         * We can do that here because this is method isn't called each
+         * time we do a command, but rather only when we initialize an
+         * RSN connection.
+         */
+
+        m_oCommandSocket.disconnect();
     }
 }
 
@@ -333,6 +371,8 @@ bool InstrumentRSNConnection::sendBreak(const uint32_t iDuration) {
     string sDuration = toString(iDuration);
     string sResponse = "Sending Serial Break " + sDuration + "(ms)\r\n\r\n";
 
+    initializeCommandSocket();
+
     // build the break command.
     std::ostringstream ssCommand;
     ssCommand << "break " << iDuration << "\r\n";
@@ -347,6 +387,9 @@ bool InstrumentRSNConnection::sendBreak(const uint32_t iDuration) {
     else {
         LOG(ERROR) << "sendCommand returned false.";
     }
+
+    // Disconnect because we don't want to keep the command port open.
+    m_oCommandSocket.disconnect();
 
     return bReturnCode;
 }
@@ -372,11 +415,33 @@ bool InstrumentRSNConnection::setTimestampBinaryOn(void) {
         if (false == bReturnCode) {
             LOG(ERROR) << "setTimestamp command not acknowledged!";
         }
+        else {
+            LOG(DEBUG) << "setTimestamp command acknowledged!";
+        }
     }
     else {
         LOG(ERROR) << "sendCommand returned false.";
     }
+
+    /*
+     * We don't disconnect in this method, because this method is called
+     * as part of the initialization for every command, and we'd
+     * disconnect from under the intended command (ex. sendBreak).
+     */
+
     return bReturnCode;
+}
+
+/******************************************************************************
+ * Method: isTimestampBinaryOn
+ * Description: Return the status of binary timestamping on RSN DIGI.
+ *
+ * Return boolean: true if on.
+ *                 false if off.
+ ******************************************************************************/
+bool InstrumentRSNConnection::isTimestampBinaryOn(void) {
+
+    return m_bTimestampBinaryOn;
 }
 
 /******************************************************************************
@@ -427,7 +492,7 @@ bool InstrumentRSNConnection::readCommandResponse(const string &sResponse) {
     if (sResponse.length() > 0) {
         uint32_t bytes_read = 0;
         uint32_t total_bytes_read = 0;
-        uint32_t iTimeout = 20; // 2 seconds
+        uint32_t iTimeout = 30; // 3 seconds
         while (bytes_read < sResponse.length() && iTimeout) {
             bytes_read = m_oCommandSocket.readData(&(pBuffer[total_bytes_read]), sResponse.length());
             total_bytes_read += bytes_read;

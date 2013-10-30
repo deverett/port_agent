@@ -110,6 +110,7 @@ namespace port_agent {
 
             // Turn DIGI timestamping on
             bool setTimestampBinaryOn(void);
+            bool isTimestampBinaryOn(void);
 
             // Generic method for sending commands to the command port
             bool sendCommand(ostringstream &ssCommand);
@@ -130,6 +131,7 @@ namespace port_agent {
         private:
             TCPCommSocket m_oDataSocket;
             TCPCommSocket m_oCommandSocket;
+            bool m_bTimestampBinaryOn;
             
     };
 }
