@@ -11,11 +11,22 @@
 
 #include <stdint.h>
 #include <string>
+#include <sstream>
 #include <sys/stat.h>
 
 using namespace std;
 
 uint16_t byteToUnsignedInt(uint8_t b);
+
+/*
+ * Method: toString
+ * Description: Convert an integer (or float) to a string. */
+template <class T>
+inline std::string toString (const T& t) {
+    std::stringstream ss;
+    ss << t;
+    return ss.str();
+}
 
 string stackTrace(const unsigned int levels = 99);
 

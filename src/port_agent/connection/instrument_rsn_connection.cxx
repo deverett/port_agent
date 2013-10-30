@@ -349,17 +349,6 @@ void InstrumentRSNConnection::initialize() {
 }
 
 /******************************************************************************
- * Method: toString
- * Description: Send a break condition for the given duration.
- ******************************************************************************/
-template <class T>
-inline std::string toString (const T& t) {
-    std::stringstream ss;
-    ss << t;
-    return ss.str();
-}
-
-/******************************************************************************
  * Method: sendBreak
  * Description: Send a break condition for the given duration.
  *
