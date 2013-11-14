@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Class: Packet
- * Filename: packet.cxx
+ * Class: BufferedSingleCharPacket
+ * Filename: buffered_single_char_packet.cxx
  * Author: Bill French (wfrench@ucsd.edu)
  * License: Apache 2.0
  *
@@ -37,7 +37,6 @@
 #include <stdio.h>
 
 using namespace std;
-using namespace packet;
 using namespace logger;
 
 /******************************************************************************
@@ -49,7 +48,7 @@ using namespace logger;
  * Description: Default constructor.  This shouldn't be used explicitly.
  *
  ******************************************************************************/
-BufferedSingleCharPacket::BufferedSingleCharPacket() : Packet::Packet() {
+BufferedSingleCharPacket::BufferedSingleCharPacket() : PortAgentPacket::PortAgentPacket() {
 	LOG(INFO) << "Default BufferedSingleCharPacket called";
 
     m_pSentinleSequence = NULL;
@@ -93,7 +92,7 @@ BufferedSingleCharPacket::BufferedSingleCharPacket( PacketType packetType,
                                                     float maxQuiescentTime,
                                                     const char* sentinleSequence,
                                                     uint16_t sentinleSequenceSize ) :
-    Packet::Packet() {
+    PortAgentPacket::PortAgentPacket() {
     
     if(packetType == 0)
         throw PacketParamOutOfRange("invalid packet type");
@@ -119,7 +118,7 @@ BufferedSingleCharPacket::BufferedSingleCharPacket( PacketType packetType,
  *              so all we have to worry about are our specialized private data.
  ******************************************************************************/
 BufferedSingleCharPacket::BufferedSingleCharPacket( BufferedSingleCharPacket& copy ) :
-    Packet::Packet(copy) {
+    PortAgentPacket::PortAgentPacket(copy) {
         
     LOG(DEBUG) << "BufferedSingleCharPacket copy constructor";
     m_pSentinleSequence = NULL;

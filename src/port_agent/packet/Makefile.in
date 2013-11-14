@@ -49,6 +49,8 @@ libport_agent_packet_a_DEPENDENCIES =  \
 	$(top_builddir)/src/common/libcommon.a
 am_libport_agent_packet_a_OBJECTS =  \
 	libport_agent_packet_a-packet.$(OBJEXT) \
+	libport_agent_packet_a-port_agent_packet.$(OBJEXT) \
+	libport_agent_packet_a-rsn_packet.$(OBJEXT) \
 	libport_agent_packet_a-buffered_single_char.$(OBJEXT)
 libport_agent_packet_a_OBJECTS = $(am_libport_agent_packet_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
@@ -216,6 +218,8 @@ top_srcdir = @top_srcdir@
 @HAVE_GMOCK_TRUE@SUBDIRS = test
 noinst_LIBRARIES = libport_agent_packet.a
 libport_agent_packet_a_SOURCES = packet.cxx packet.h \
+                                 port_agent_packet.cxx port_agent_packet.h \
+                                 rsn_packet.cxx rsn_packet.h \
                                  buffered_single_char.cxx buffered_single_char.h
 
 libport_agent_packet_a_CXXFLAGS = -I$(top_builddir)/src
@@ -270,6 +274,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libport_agent_packet_a-buffered_single_char.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libport_agent_packet_a-packet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libport_agent_packet_a-port_agent_packet.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libport_agent_packet_a-rsn_packet.Po@am__quote@
 
 .cxx.o:
 @am__fastdepCXX_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -300,6 +306,34 @@ libport_agent_packet_a-packet.obj: packet.cxx
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='packet.cxx' object='libport_agent_packet_a-packet.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -c -o libport_agent_packet_a-packet.obj `if test -f 'packet.cxx'; then $(CYGPATH_W) 'packet.cxx'; else $(CYGPATH_W) '$(srcdir)/packet.cxx'; fi`
+
+libport_agent_packet_a-port_agent_packet.o: port_agent_packet.cxx
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -MT libport_agent_packet_a-port_agent_packet.o -MD -MP -MF $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Tpo -c -o libport_agent_packet_a-port_agent_packet.o `test -f 'port_agent_packet.cxx' || echo '$(srcdir)/'`port_agent_packet.cxx
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Tpo $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='port_agent_packet.cxx' object='libport_agent_packet_a-port_agent_packet.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -c -o libport_agent_packet_a-port_agent_packet.o `test -f 'port_agent_packet.cxx' || echo '$(srcdir)/'`port_agent_packet.cxx
+
+libport_agent_packet_a-port_agent_packet.obj: port_agent_packet.cxx
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -MT libport_agent_packet_a-port_agent_packet.obj -MD -MP -MF $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Tpo -c -o libport_agent_packet_a-port_agent_packet.obj `if test -f 'port_agent_packet.cxx'; then $(CYGPATH_W) 'port_agent_packet.cxx'; else $(CYGPATH_W) '$(srcdir)/port_agent_packet.cxx'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Tpo $(DEPDIR)/libport_agent_packet_a-port_agent_packet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='port_agent_packet.cxx' object='libport_agent_packet_a-port_agent_packet.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -c -o libport_agent_packet_a-port_agent_packet.obj `if test -f 'port_agent_packet.cxx'; then $(CYGPATH_W) 'port_agent_packet.cxx'; else $(CYGPATH_W) '$(srcdir)/port_agent_packet.cxx'; fi`
+
+libport_agent_packet_a-rsn_packet.o: rsn_packet.cxx
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -MT libport_agent_packet_a-rsn_packet.o -MD -MP -MF $(DEPDIR)/libport_agent_packet_a-rsn_packet.Tpo -c -o libport_agent_packet_a-rsn_packet.o `test -f 'rsn_packet.cxx' || echo '$(srcdir)/'`rsn_packet.cxx
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libport_agent_packet_a-rsn_packet.Tpo $(DEPDIR)/libport_agent_packet_a-rsn_packet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rsn_packet.cxx' object='libport_agent_packet_a-rsn_packet.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -c -o libport_agent_packet_a-rsn_packet.o `test -f 'rsn_packet.cxx' || echo '$(srcdir)/'`rsn_packet.cxx
+
+libport_agent_packet_a-rsn_packet.obj: rsn_packet.cxx
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -MT libport_agent_packet_a-rsn_packet.obj -MD -MP -MF $(DEPDIR)/libport_agent_packet_a-rsn_packet.Tpo -c -o libport_agent_packet_a-rsn_packet.obj `if test -f 'rsn_packet.cxx'; then $(CYGPATH_W) 'rsn_packet.cxx'; else $(CYGPATH_W) '$(srcdir)/rsn_packet.cxx'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/libport_agent_packet_a-rsn_packet.Tpo $(DEPDIR)/libport_agent_packet_a-rsn_packet.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='rsn_packet.cxx' object='libport_agent_packet_a-rsn_packet.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -c -o libport_agent_packet_a-rsn_packet.obj `if test -f 'rsn_packet.cxx'; then $(CYGPATH_W) 'rsn_packet.cxx'; else $(CYGPATH_W) '$(srcdir)/rsn_packet.cxx'; fi`
 
 libport_agent_packet_a-buffered_single_char.o: buffered_single_char.cxx
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libport_agent_packet_a_CXXFLAGS) $(CXXFLAGS) -MT libport_agent_packet_a-buffered_single_char.o -MD -MP -MF $(DEPDIR)/libport_agent_packet_a-buffered_single_char.Tpo -c -o libport_agent_packet_a-buffered_single_char.o `test -f 'buffered_single_char.cxx' || echo '$(srcdir)/'`buffered_single_char.cxx

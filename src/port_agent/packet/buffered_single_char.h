@@ -60,87 +60,85 @@
 #define __BUFFERED_SINGLE_CHAR_H_
 
 #include "common/timestamp.h"
-#include "packet.h"
+#include "port_agent_packet.h"
 
 #include <string>
 #include <stdint.h>
 
 using namespace std;
 
-namespace packet {
-    class BufferedSingleCharPacket : public Packet {
-        /********************
-         *      METHODS     *
-         ********************/
-        
-        public:
-         	// Constructor
-         	BufferedSingleCharPacket();
+class BufferedSingleCharPacket : public PortAgentPacket {
+    /********************
+     *      METHODS     *
+     ********************/
 
-            // Constructor.
-            BufferedSingleCharPacket( PacketType packetType,
-                                      uint16_t maxPayloadSize,
-                                      float maxQuiescentTime = 0,
-                                      const char* sentinleSequence = NULL,
-                                      uint16_t sentinleSequenceSize = 0 );
-        
-            // Copy Constructor.
-            BufferedSingleCharPacket( BufferedSingleCharPacket& copy );
-            
-            // Destructor
-            ~BufferedSingleCharPacket();
-            
-            // overloaded assignment
-            virtual BufferedSingleCharPacket & operator=(const BufferedSingleCharPacket &rhs);
+    public:
+        // Constructor
+        BufferedSingleCharPacket();
 
-            // Add a character to the packet buffer, time is set to now implicitly
-            void add(char input);
+        // Constructor.
+        BufferedSingleCharPacket( PacketType packetType,
+                                  uint16_t maxPayloadSize,
+                                  float maxQuiescentTime = 0,
+                                  const char* sentinleSequence = NULL,
+                                  uint16_t sentinleSequenceSize = 0 );
 
-            // Add a character to the packet buffer
-            void add(char input, const Timestamp &timestamp);
-            
-            // Overloaded readyToSend method
-            bool readyToSend();
-            
-            // Set the sentinle sequence
-            void setSentinle(const char* sentinleSequence, uint16_t sentinleSequenceSize);
-            
-            // Set the max quiescent time
-            void setQuiescentTime(float maxQuiecentTime);
-            
-            // Get the sentinle sequence, used for testing.
-            char* sentinle() { return m_pSentinleSequence; }
+        // Copy Constructor.
+        BufferedSingleCharPacket( BufferedSingleCharPacket& copy );
         
-            // Get the sentinle sequence, used for testing.
-            uint16_t sentinleSize() { return m_iSentinleSize; }
+        // Destructor
+        ~BufferedSingleCharPacket();
         
-        protected:
+        // overloaded assignment
+        virtual BufferedSingleCharPacket & operator=(const BufferedSingleCharPacket &rhs);
 
-        private:
+        // Add a character to the packet buffer, time is set to now implicitly
+        void add(char input);
+
+        // Add a character to the packet buffer
+        void add(char input, const Timestamp &timestamp);
+
+        // Overloaded readyToSend method
+        bool readyToSend();
+
+        // Set the sentinle sequence
+        void setSentinle(const char* sentinleSequence, uint16_t sentinleSequenceSize);
         
-            // Setup the packet buffer.  This is private because I don't want
-            // people to change this after the object is instantiated. 
-            void setMaxPayloadSize(uint16_t maxPayloadSize);
+        // Set the max quiescent time
+        void setQuiescentTime(float maxQuiecentTime);
         
-        /********************
-         *      MEMBERS     *
-         ********************/
+        // Get the sentinle sequence, used for testing.
+        char* sentinle() { return m_pSentinleSequence; }
+
+        // Get the sentinle sequence, used for testing.
+        uint16_t sentinleSize() { return m_iSentinleSize; }
+
+    protected:
+
+    private:
+
+        // Setup the packet buffer.  This is private because I don't want
+        // people to change this after the object is instantiated.
+        void setMaxPayloadSize(uint16_t maxPayloadSize);
+
+    /********************
+     *      MEMBERS     *
+     ********************/
+
+    protected:
         
-        protected:
-            
-        private:
-            // members for sentinle triggering
-            char* m_pSentinleSequence;
-            uint16_t m_iSentinleSize;
-            uint16_t m_iSentinleIndex;
-            
-            // members for quiescent triggering
-            float m_fQuiescentTime;
-            Timestamp m_oLastAddTimestamp;
-            
-            // member for max payload size triggering
-            uint16_t m_iMaxPayloadSize;
-    };
-}
+    private:
+        // members for sentinle triggering
+        char* m_pSentinleSequence;
+        uint16_t m_iSentinleSize;
+        uint16_t m_iSentinleIndex;
+        
+        // members for quiescent triggering
+        float m_fQuiescentTime;
+        Timestamp m_oLastAddTimestamp;
+        
+        // member for max payload size triggering
+        uint16_t m_iMaxPayloadSize;
+};
 
 #endif //__BUFFERED_SINGLE_CHAR_H_

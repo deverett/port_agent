@@ -15,7 +15,9 @@
 #include "connection/instrument_rsn_connection.h"
 #include "connection/instrument_botpt_connection.h"
 #include "connection/instrument_serial_connection.h"
-#include "packet/packet.h"
+#include "packet/port_agent_packet.h"
+#include "packet/rsn_packet.h"
+
 #include "packet/buffered_single_char.h"
 
 #include "publisher/log_publisher.h"
@@ -1610,7 +1612,7 @@ void PortAgent::publishHeartbeat() {
     // if we have specificed a heartbeat interval and we need to send a heartbeat
     if(m_pConfig->heartbeatInterval() && now - m_lLastHeartbeat > m_pConfig->heartbeatInterval() ) {
         
-        Packet packet(PORT_AGENT_HEARTBEAT, ts, "", 0);
+        PortAgentPacket packet(PORT_AGENT_HEARTBEAT, ts, "", 0);
         LOG(DEBUG) << "Port Agent Heartbeat";
         publishPacket(&packet);
         m_lLastHeartbeat = now;
@@ -1623,7 +1625,7 @@ void PortAgent::publishHeartbeat() {
  ******************************************************************************/
 void PortAgent::publishFault(const string &msg) {
     Timestamp ts;
-    Packet packet(PORT_AGENT_FAULT, ts, (char *)(msg.c_str()), msg.length());
+    PortAgentPacket packet(PORT_AGENT_FAULT, ts, (char *)(msg.c_str()), msg.length());
 
     LOG(ERROR) << "Port Agent Fault: " << msg;
     publishPacket(&packet);
@@ -1635,7 +1637,7 @@ void PortAgent::publishFault(const string &msg) {
  ******************************************************************************/
 void PortAgent::publishStatus(const string &msg) {
     Timestamp ts;
-    Packet packet(PORT_AGENT_STATUS, ts, (char *)(msg.c_str()), msg.length());
+    PortAgentPacket packet(PORT_AGENT_STATUS, ts, (char *)(msg.c_str()), msg.length());
 
     LOG(ERROR) << "Port Agent Status: " << msg;
     publishPacket(&packet);
@@ -1658,12 +1660,19 @@ void PortAgent::publishPacket(Packet *packet) {
 void PortAgent::publishPacket(char *payload, uint16_t size, PacketType type) {
     Timestamp ts;
 
+     // Create a packet based upon the type
     if (DATA_FROM_INSTRUMENT == type) {
-        Packet packet(type, ts, payload, size);
+        PortAgentPacket packet(type, ts, payload, size);
         publishPacket(&packet);
     }
-    else {
+    // this is an RSN packet, so in this case the payload is the entire packet
+    // from the DIGI (including 16-byte header
+    else if (DATA_FROM_RSN == type) {
         publishPacket((Packet *) payload);
+    }
+    // this is an error
+    else {
+        LOG(ERROR) << "Unknown packet type: " << type;
     }
 }
 

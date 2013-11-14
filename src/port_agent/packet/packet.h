@@ -4,7 +4,10 @@
  * Author: Bill French (wfrench@ucsd.edu)
  * License: Apache 2.0
  *
- * Basic packet object for the port agent.  Packets are teh communication
+ * Basic packet object for the port agent.  This base class is necessary because
+ * RSN DIGI packets arrive with 16-byte headers, but we still need a common packet
+ * type that both RSN DIGI packets and port agent packets use.  The reason is that
+ * all of the publishers want a packet object.  Packets are the communication
  * protocol for the port agent to outside interfaces via the data and command
  * port.  They are transmitted as binary datagrams with the following structure.
  *
@@ -15,23 +18,7 @@
  * NOTE: This packet will likely never directly be used in code, but extended
  * to handle different input methods.  That said, it could be used if we know
  * the entire content of the packet before it is created.
- * 
- * A packet contains:
  *
- * sync series      24 bits
- * message type     8 bits
- * packet size      16 bits (including the header)
- * checksum         16 bits
- * timestamp        64 bits
- * payload          variable size
- *
- * Usage:
- *
- * Packet packet(DATA_FROM_DRIVER, timestamp, payload, length);
- *
- * if(packet.readyToSend())
- *    write(packet.packet(), packet().packetSize());
- *    
  ******************************************************************************/
 
 #ifndef __PACKET_H_
@@ -72,28 +59,20 @@ namespace packet {
             ///////////////////////
             // Public Methods
             Packet();
-            Packet(PacketType packet_type, Timestamp timestamp,
-                   char *payload, uint16_t payload_size);
-            Packet(const Packet &rhs);
             virtual ~Packet();
             
-            /* Operators */
-            virtual Packet & operator=(const Packet &rhs);
-
             /* Accessors */
             PacketType packetType() { return m_tPacketType; }
             uint16_t packetSize()    { return m_iPacketSize; }
             uint16_t payloadSize()   { return m_iPacketSize - HEADER_SIZE; }
-            uint16_t checksum()      { return m_iChecksum; }
-            Timestamp timestamp()    { return m_oTimestamp; }
             char* payload()          { return m_pPacket + HEADER_SIZE; }
-            char* packet();
+            virtual char* packet() = 0;  // must be implemented by subclasses
             
             // return a ASCII string representation of the packet
             string asAscii();
 
             // return a pretty string representation of the packet
-            string pretty();
+            virtual string pretty() = 0;
             
             // The basic packets are always ready to send.  This will need to be
             // overloaded for buffered packets.
@@ -103,15 +82,8 @@ namespace packet {
             string typeToString(PacketType type);
         protected:
 
-            // Calculate a checksum of the packet buffer.
-            virtual uint16_t calculateChecksum();
-
-            // deep copy a packet object
-            virtual void copy(const Packet &copy);
-
-            // ascii packet label
-            string asciiPacketLabel() { return "port_agent_packet"; }
-            string asciiPacketTimestamp() { return m_oTimestamp.asNumber(); }
+             string asciiPacketLabel() { return "packet"; }
+            virtual string asciiPacketTimestamp() = 0; // must be implemented by subclasses.
             string asciiPacketType() { return typeToString(m_tPacketType); }
 
 
@@ -125,8 +97,6 @@ namespace packet {
             
             PacketType m_tPacketType;
             uint16_t m_iPacketSize;
-            uint16_t m_iChecksum;
-            Timestamp m_oTimestamp;
             char *m_pPacket;
 
     };

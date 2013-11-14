@@ -5,6 +5,8 @@ endif
 noinst_LIBRARIES= libport_agent_packet.a
 
 libport_agent_packet_a_SOURCES = packet.cxx packet.h \
+                                 port_agent_packet.cxx port_agent_packet.h \
+                                 rsn_packet.cxx rsn_packet.h \
                                  buffered_single_char.cxx buffered_single_char.h
 
 libport_agent_packet_a_CXXFLAGS = -I$(top_builddir)/src
