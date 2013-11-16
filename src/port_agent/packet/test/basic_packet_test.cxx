@@ -1,7 +1,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "common/util.h"
-#include "port_agent/packet/packet.h"
+#include "port_agent/packet/port_agent_packet.h"
 #include "gtest/gtest.h"
 
 #include <sstream>
@@ -33,11 +33,11 @@ TEST_F(PortAgentPacketTest, CTOR) {
     char *payload = strdup("ad");
     int length = strlen(payload);
     
-    Packet packet(DATA_FROM_DRIVER, timestamp, payload, length);
+    PortAgentPacket packet(DATA_FROM_DRIVER, timestamp, payload, length);
     char* packetBuffer = packet.packet();
 	
 	string pretty = packet.pretty();
-	LOG(DEBUG) << "Packet: " << pretty;
+	LOG(DEBUG) << "PortAgentPacket: " << pretty;
     
     EXPECT_EQ(packet.packetType(), DATA_FROM_DRIVER);
     EXPECT_EQ(packet.packetSize(), length + HEADER_SIZE);
@@ -91,10 +91,10 @@ TEST_F(PortAgentPacketTest, CopyCTORWithData) {
     char *payload = strdup("ad");
     int length = strlen(payload);
 
-    Packet packet(DATA_FROM_DRIVER, timestamp, payload, length);
+    PortAgentPacket packet(DATA_FROM_DRIVER, timestamp, payload, length);
 
     // Explicitly call the copy constructor
-    Packet copy(packet);
+    PortAgentPacket copy(packet);
 
     EXPECT_EQ(packet.packetType(), copy.packetType());
     EXPECT_EQ(packet.packetSize(), copy.packetSize());
@@ -125,11 +125,11 @@ TEST_F(PortAgentPacketTest, CopyCTORWithOutData) {
 	// Set time to 1.5 seconds past the epoch
 	Timestamp timestamp(1, 0x80000000);
 
-    Packet packet(DATA_FROM_DRIVER, timestamp, NULL, 0);
+    PortAgentPacket packet(DATA_FROM_DRIVER, timestamp, NULL, 0);
     char* packetBuffer = packet.packet();
 
     // Explicitly call the copy constructor
-    Packet copy(packet);
+    PortAgentPacket copy(packet);
 
     EXPECT_EQ(packet.packetType(), copy.packetType());
     EXPECT_EQ(packet.packetSize(), copy.packetSize());
@@ -161,9 +161,9 @@ TEST_F(PortAgentPacketTest, PacketAssignment) {
     char *payload = strdup("ad");
     int length = strlen(payload);
 
-    Packet packet(DATA_FROM_DRIVER, timestamp, payload, length);
+    PortAgentPacket packet(DATA_FROM_DRIVER, timestamp, payload, length);
 
-    Packet copy = packet;
+    PortAgentPacket copy = packet;
 
     EXPECT_EQ(packet.packetType(), copy.packetType());
     EXPECT_EQ(packet.packetSize(), copy.packetSize());
@@ -188,7 +188,7 @@ TEST_F(PortAgentPacketTest, PacketAssignment) {
 
 /* Test typeToString */
 TEST_F(PortAgentPacketTest, PacketTypeToText) {
-    Packet packet;
+    PortAgentPacket packet;
 
     EXPECT_EQ(packet.typeToString(UNKNOWN), "UNKNOWN");
     EXPECT_EQ(packet.typeToString(DATA_FROM_INSTRUMENT), "DATA_FROM_INSTRUMENT");
@@ -208,7 +208,7 @@ TEST_F(PortAgentPacketTest, AsciiOutput) {
     char *payload = strdup("ad");
     int length = strlen(payload);
 
-    Packet packet(DATA_FROM_DRIVER, timestamp, payload, length);
+    PortAgentPacket packet(DATA_FROM_DRIVER, timestamp, payload, length);
 
     string expected = "<port_agent_packet type=\"DATA_FROM_DRIVER\" time=\"1.5\">ad</port_agent_packet>\n\r";
     string result = packet.asAscii();

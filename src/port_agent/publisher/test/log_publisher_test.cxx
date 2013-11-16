@@ -2,7 +2,7 @@
 #include "common/logger.h"
 #include "common/log_file.h"
 #include "common/util.h"
-#include "port_agent/packet/packet.h"
+#include "port_agent/packet/port_agent_packet.h"
 #include "port_agent/publisher/log_publisher.h"
 #include "port_agent/packet/buffered_single_char.h"
 #include "gtest/gtest.h"
@@ -44,7 +44,7 @@ TEST_F(LogPublisherTest, SingleAsciiOut) {
     publisher.setAsciiMode(true);
 
     Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_TRUE(publisher.publish(&packet));
     publisher.close();
@@ -65,7 +65,7 @@ TEST_F(LogPublisherTest, TwoAsciiOut) {
     publisher.setAsciiMode(true);
 
     Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_TRUE(publisher.publish(&packet));
     publisher.close();
@@ -88,7 +88,7 @@ TEST_F(LogPublisherTest, SingleBinaryOut) {
     publisher.setFilename(DATAFILE);
 
     Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_TRUE(publisher.publish(&packet));
     publisher.close();
@@ -111,7 +111,7 @@ TEST_F(LogPublisherTest, DoubleBinaryOut) {
     publisher.setFilename(DATAFILE);
 
     Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_TRUE(publisher.publish(&packet));
     publisher.close();
@@ -131,7 +131,7 @@ TEST_F(LogPublisherTest, FailureNoFile) {
     LogPublisher publisher;
 
     Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_FALSE(publisher.publish(&packet));
 }
@@ -142,7 +142,7 @@ TEST_F(LogPublisherTest, LogRotation) {
     publisher.setFilebase(DATAFILE);
     
 	Timestamp ts(1, 0x80000000);
-	Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+	PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 
     EXPECT_TRUE(publisher.publish(&packet));
 	

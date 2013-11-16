@@ -5,7 +5,7 @@
 #include "common/logger.h"
 #include "common/util.h"
 #include "common/spawn_process.h"
-#include "port_agent/packet/packet.h"
+#include "port_agent/packet/port_agent_packet.h"
 #include "port_agent/packet/buffered_single_char.h"
 
 #include "gtest/gtest.h"
@@ -66,7 +66,7 @@ class FilePointerPublisherTest : public PublisherTest {
         virtual size_t expectedAsciiPacket(char *buffer, const PacketType &type) {
             ostringstream out;
             out << "<port_agent_packet type=\""
-                << Packet().typeToString(type)
+                << PortAgentPacket().typeToString(type)
                 << "\" time=\"1.5\">data</port_agent_packet>\n\r";
             strcpy(buffer, out.str().c_str());
             return out.str().length();
@@ -141,10 +141,10 @@ class FilePointerPublisherTest : public PublisherTest {
             int count;
             int expectedSize;
             Timestamp ts(1, 0x80000000);
-            Packet packet(packetType, ts, "data", 4);
+            PortAgentPacket packet(packetType, ts, "data", 4);
 
             LOG(INFO) << "***************************************************************";
-            LOG(INFO) << "Testing publish with packet type: " << Packet().typeToString(packetType);
+            LOG(INFO) << "Testing publish with packet type: " << PortAgentPacket().typeToString(packetType);
             LOG(INFO) << "***************************************************************" << endl;
 
 			if(ascii)
@@ -199,11 +199,11 @@ class FilePointerPublisherTest : public PublisherTest {
             char result[1024];
             int count;
             Timestamp ts(1, 0x80000000);
-            Packet packet(packetType, ts, "data", 4);
+            PortAgentPacket packet(packetType, ts, "data", 4);
 
             LOG(INFO) << "***************************************************************";
             LOG(INFO) << "Testing non-published with packet type: "
-            << Packet().typeToString(packetType);
+            << PortAgentPacket().typeToString(packetType);
             LOG(INFO) << "***************************************************************" << endl;
 
             LOG(DEBUG2) << "remove the date file: " << datafile;
@@ -243,13 +243,13 @@ class FilePointerPublisherTest : public PublisherTest {
         template <class T>
         bool testPublishFailure(T &publisher, const PacketType &packetType) {
             Timestamp ts(1, 0x80000000);
-            Packet packet(packetType, ts, "data", 4);
+            PortAgentPacket packet(packetType, ts, "data", 4);
             string errorMessage;
             int errorNumber;
         
             LOG(INFO) << "***************************************************************";
             LOG(INFO) << "Testing publishing failures with packet type: "
-            << Packet().typeToString(packetType);
+            << PortAgentPacket().typeToString(packetType);
             LOG(INFO) << "***************************************************************" << endl;
         
             LOG(DEBUG) << "Open file: " << datafile;
@@ -299,11 +299,11 @@ class FilePointerPublisherTest : public PublisherTest {
             int count;
             int expectedSize;
             Timestamp ts(1, 0x80000000);
-            Packet packet(packetType, ts, "data", 4);
+            PortAgentPacket packet(packetType, ts, "data", 4);
 			bool ascii = true;
         
             LOG(INFO) << "***************************************************************";
-            LOG(INFO) << "Testing commbase publish with packet type: " << Packet().typeToString(packetType);
+            LOG(INFO) << "Testing commbase publish with packet type: " << PortAgentPacket().typeToString(packetType);
             LOG(INFO) << "***************************************************************" << endl;
         
             LOG(DEBUG2) << "remove the date file: " << datafile;

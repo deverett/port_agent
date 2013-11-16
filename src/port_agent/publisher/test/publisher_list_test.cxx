@@ -2,7 +2,7 @@
 #include "common/logger.h"
 #include "common/log_file.h"
 #include "common/util.h"
-#include "port_agent/packet/packet.h"
+#include "port_agent/packet/port_agent_packet.h"
 #include "port_agent/publisher/publisher_list.h"
 #include "port_agent/publisher/driver_command_publisher.h"
 #include "port_agent/publisher/instrument_command_publisher.h"
@@ -192,7 +192,7 @@ TEST_F(PublisherListTest, DISABLED_PublishTest) {
     TCPPublisher publisherA(&socketA);
             
 	Timestamp ts(1, 0x80000000);
-    Packet packet(DATA_FROM_DRIVER, ts, "data", 4);
+    PortAgentPacket packet(DATA_FROM_DRIVER, ts, "data", 4);
 	
 	list.add(&publisher);
 	EXPECT_EQ(list.size(), 1);
